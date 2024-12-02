@@ -13,6 +13,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from ..core.converter import ImageConverter
+from ..core.watermark import WatermarkProcessor
 from ..utils.validators import ValidationError
 from ..config.settings import (
     DEFAULT_LOG_FORMAT,
@@ -302,6 +303,49 @@ def rotate(
         )
         
         console.print(f"[green]Successfully rotated image:[/] {input_path} -> {output_path}")
+        
+    except ValidationError as e:
+        console.print(f"[red]Validation error:[/] {str(e)}")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"[red]Unexpected error:[/] {str(e)}")
+        raise typer.Exit(1)
+
+
+@app.command()
+def watermark(
+    input_path: Path = typer.Argument(..., help="Path to input image"),
+    output_path: Path = typer.Argument(..., help="Path for output image"),
+    text: str = typer.Option(..., help="Text to use as watermark"),
+    position: str = typer.Option(
+        "bottom-right",
+        help="Watermark position (top-left, top-right, bottom-left, bottom-right, center)"
+    ),
+    opacity: int = typer.Option(50, help="Watermark opacity (0-100)"),
+    font_size: int = typer.Option(36, help="Font size for watermark text"),
+    font_color: str = typer.Option("white", help="Color of watermark text"),
+    quality: Optional[int] = typer.Option(None, help="Quality for lossy formats (1-100)"),
+    log_level: str = typer.Option("INFO", help="Logging level"),
+):
+    """
+    Add a text watermark to an image.
+    """
+    try:
+        setup_logging(show_logs=True, log_level=log_level)
+        logger.debug(f"Adding watermark to {input_path}")
+        
+        WatermarkProcessor.add_watermark(
+            input_path=input_path,
+            output_path=output_path,
+            text=text,
+            position=position,
+            opacity=opacity,
+            font_size=font_size,
+            font_color=font_color,
+            quality=quality,
+        )
+        
+        console.print(f"[green]Successfully added watermark:[/] {input_path} -> {output_path}")
         
     except ValidationError as e:
         console.print(f"[red]Validation error:[/] {str(e)}")

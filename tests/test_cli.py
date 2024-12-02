@@ -1,10 +1,19 @@
-"""Tests for the CLI interface."""
-
+"""Tests for CLI functionality."""
 import pytest
-from typer.testing import CliRunner
 from pathlib import Path
+from typer.testing import CliRunner
+from PIL import Image
 
 from oneimage.cli.main import app
+
+# Test constants
+TEST_WIDTH = 100
+TEST_HEIGHT = 100
+
+def create_test_image(path: Path, mode: str = 'RGB'):
+    """Create a test image for CLI tests."""
+    img = Image.new(mode, (TEST_WIDTH, TEST_HEIGHT), color='white')
+    img.save(path)
 
 
 @pytest.fixture
@@ -143,3 +152,83 @@ def test_log_levels(runner, test_images, temp_output_dir, cleanup_logs, log_leve
     assert result.exit_code == 0
     assert output_file.exists()
     assert Path("logs/oneimage.log").exists()
+
+
+def test_watermark_command_help(runner):
+    """Test watermark command help output."""
+    result = runner.invoke(app, ["watermark", "--help"])
+    assert result.exit_code == 0
+    assert "Add a text watermark" in result.stdout
+
+
+def test_watermark_basic(runner, tmp_path):
+    """Test basic watermark command."""
+    input_path = tmp_path / "test_input.png"
+    output_path = tmp_path / "test_output.png"
+    create_test_image(input_path)
+    
+    result = runner.invoke(app, [
+        "watermark",
+        str(input_path),
+        str(output_path),
+        "--text", "Test Watermark"
+    ])
+    
+    assert result.exit_code == 0
+    assert output_path.exists()
+
+
+def test_watermark_with_options(runner, tmp_path):
+    """Test watermark command with all options."""
+    input_path = tmp_path / "test_input.png"
+    output_path = tmp_path / "test_output.jpg"
+    create_test_image(input_path)
+    
+    result = runner.invoke(app, [
+        "watermark",
+        str(input_path),
+        str(output_path),
+        "--text", "Test",
+        "--position", "center",
+        "--opacity", "75",
+        "--font-size", "24",
+        "--font-color", "red",
+        "--quality", "90"
+    ])
+    
+    assert result.exit_code == 0
+    assert output_path.exists()
+
+
+def test_watermark_invalid_input(runner, tmp_path):
+    """Test watermark command with invalid input path."""
+    input_path = tmp_path / "nonexistent.png"
+    output_path = tmp_path / "test_output.png"
+    
+    result = runner.invoke(app, [
+        "watermark",
+        str(input_path),
+        str(output_path),
+        "--text", "Test"
+    ])
+    
+    assert result.exit_code == 1
+    assert not output_path.exists()
+
+
+def test_watermark_invalid_opacity(runner, tmp_path):
+    """Test watermark command with invalid opacity."""
+    input_path = tmp_path / "test_input.png"
+    output_path = tmp_path / "test_output.png"
+    create_test_image(input_path)
+    
+    result = runner.invoke(app, [
+        "watermark",
+        str(input_path),
+        str(output_path),
+        "--text", "Test",
+        "--opacity", "101"
+    ])
+    
+    assert result.exit_code == 1
+    assert not output_path.exists()

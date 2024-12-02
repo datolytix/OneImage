@@ -1,21 +1,15 @@
-"""Core image conversion functionality."""
-
+"""Image converter module for OneImage."""
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 
 from PIL import Image
 from loguru import logger
 
-from ..config.settings import DEFAULT_QUALITY
-from ..utils.validators import (
-    ValidationError,
-    validate_image_path,
-    validate_quality,
-)
+from oneimage.utils.validators import validate_image_path, validate_quality, ValidationError
+from oneimage.core.base import BaseConverter, DEFAULT_QUALITY
 
-
-class ImageConverter:
-    """Class for handling image conversion operations."""
+class ImageConverter(BaseConverter):
+    """Handles image conversion and transformation operations."""
 
     @staticmethod
     def convert_image(
