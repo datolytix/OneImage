@@ -37,8 +37,8 @@ def validate_quality(quality: Optional[Union[int, str]]) -> Optional[int]:
     if quality is None:
         return None
 
-    # First check if it's a boolean
-    if isinstance(quality, bool):
+    # First check if it's a boolean or float
+    if isinstance(quality, (bool, float)):
         raise ValidationError(f"Quality must be an integer between 1 and 100, got {quality}")
 
     try:
