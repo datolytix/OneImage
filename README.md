@@ -4,12 +4,12 @@ A powerful command-line tool for image conversion and manipulation.
 
 ## Features
 
-- Convert images between different formats
+- Convert images between different formats (PNG, JPEG, WebP)
 - Resize images with aspect ratio preservation
-- Support for multiple image formats (PNG, JPEG, WebP)
-- Quality control for lossy formats
-- Detailed logging and error reporting
-- User-friendly CLI interface with rich formatting
+- Rotate images with customizable angles
+- High-quality image processing
+- Comprehensive error handling
+- User-friendly command-line interface
 
 ## Installation
 
@@ -19,43 +19,51 @@ pip install oneimage
 
 ## Usage
 
-### Convert Images
+### Commands
 
-Convert an image from one format to another:
-
+#### Convert
+Convert images between different formats:
 ```bash
 oneimage convert input.png output.jpg
+oneimage convert input.webp output.jpg --quality 95
 ```
 
-With quality control:
-
+#### Resize
+Resize images with various options:
 ```bash
-oneimage convert input.png output.jpg --quality 85
-```
-
-### Resize Images
-
-Resize an image while maintaining aspect ratio:
-
-```bash
-# Resize to specific width (height auto-calculated)
 oneimage resize input.jpg output.jpg --width 800
-
-# Resize to specific height (width auto-calculated)
-oneimage resize input.jpg output.jpg --height 600
-
-# Resize to fit within dimensions (maintains aspect ratio)
-oneimage resize input.jpg output.jpg --width 800 --height 600
-
-# Resize to exact dimensions (ignores aspect ratio)
-oneimage resize input.jpg output.jpg --width 800 --height 600 --no-aspect-ratio
+oneimage resize input.png output.png --height 600 --keep-aspect
 ```
 
-### Additional Options
+#### Rotate
+Rotate images by any angle:
+```bash
+# Basic 90-degree rotation
+oneimage rotate input.jpg output.jpg
 
-- `--quality`: Set output quality for JPEG/WebP (1-100)
-- `--show-logs`: Display detailed operation logs
-- `--log-level`: Set logging detail level (DEBUG/INFO/WARNING/ERROR)
+# Custom angle with quality setting
+oneimage rotate input.png output.jpg --angle 45 --quality 95
+
+# Rotate without expanding canvas
+oneimage rotate input.webp output.webp --angle 180 --expand false
+```
+
+### Options
+
+#### Global Options
+- `--log-level`: Set logging level (DEBUG, INFO, WARNING, ERROR)
+
+#### Format-specific Options
+- `--quality`: Set quality for lossy formats (1-100, default: 85)
+
+#### Resize Options
+- `--width`: Target width in pixels
+- `--height`: Target height in pixels
+- `--keep-aspect`: Maintain aspect ratio (default: true)
+
+#### Rotate Options
+- `--angle`: Rotation angle in degrees (default: 90)
+- `--expand`: Expand canvas to fit rotated image (default: true)
 
 ## Supported Formats
 

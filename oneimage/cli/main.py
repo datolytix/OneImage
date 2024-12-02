@@ -276,5 +276,40 @@ def resize(
         sys.exit(1)
 
 
+@app.command()
+def rotate(
+    input_path: Path = typer.Argument(..., help="Path to input image"),
+    output_path: Path = typer.Argument(..., help="Path for output image"),
+    angle: float = typer.Option(90.0, help="Rotation angle in degrees (counter-clockwise)"),
+    expand: bool = typer.Option(True, help="Expand output to fit rotated image"),
+    quality: Optional[int] = typer.Option(None, help="Quality for lossy formats (1-100)"),
+    log_level: str = typer.Option("INFO", help="Logging level"),
+):
+    """
+    Rotate an image by a specified angle.
+    """
+    try:
+        setup_logging(log_level)
+        logger.debug(f"Starting rotation with angle {angle}")
+        
+        converter = ImageConverter()
+        converter.rotate_image(
+            input_path=input_path,
+            output_path=output_path,
+            angle=angle,
+            expand=expand,
+            quality=quality,
+        )
+        
+        console.print(f"[green]Successfully rotated image:[/] {input_path} -> {output_path}")
+        
+    except ValidationError as e:
+        console.print(f"[red]Validation error:[/] {str(e)}")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"[red]Unexpected error:[/] {str(e)}")
+        raise typer.Exit(1)
+
+
 if __name__ == '__main__':
     app()

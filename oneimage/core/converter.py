@@ -197,5 +197,70 @@ class ImageConverter:
             logger.error(f"Error resizing image: {str(e)}")
             raise ValidationError(f"Error during image resize: {str(e)}")
 
+    @staticmethod
+    def rotate_image(
+        input_path: Union[str, Path],
+        output_path: Union[str, Path],
+        angle: float,
+        expand: bool = True,
+        quality: Optional[Union[int, str]] = None,
+    ) -> None:
+        """
+        Rotate an image by a specified angle.
+
+        Parameters
+        ----------
+        input_path : Union[str, Path]
+            Path to input image file
+        output_path : Union[str, Path]
+            Path where rotated image will be saved
+        angle : float
+            Rotation angle in degrees (counter-clockwise)
+        expand : bool
+            Whether to expand output image to fit rotated result
+        quality : Optional[Union[int, str]]
+            Quality setting for lossy formats (1-100)
+
+        Raises
+        ------
+        ValidationError
+            If any validation fails
+        """
+        try:
+            logger.info(f"Starting rotation: {input_path} -> {output_path}")
+            
+            # Validate paths
+            input_path = validate_image_path(input_path, should_exist=True)
+            output_path = validate_image_path(output_path, should_exist=False)
+            
+            # Validate quality
+            quality_value = validate_quality(quality) or DEFAULT_QUALITY
+            
+            # Open and rotate image
+            with Image.open(input_path) as img:
+                # Rotate the image
+                rotated_img = img.rotate(angle, expand=expand, resample=Image.Resampling.BICUBIC)
+                
+                # Convert RGBA to RGB if saving as JPEG
+                if output_path.suffix.lower() in ['.jpg', '.jpeg'] and rotated_img.mode == 'RGBA':
+                    logger.debug("Converting RGBA to RGB for JPEG output")
+                    rotated_img = rotated_img.convert('RGB')
+                
+                # Prepare save parameters
+                save_params = {}
+                if output_path.suffix.lower() in ['.jpg', '.jpeg', '.webp']:
+                    save_params['quality'] = quality_value
+                
+                # Save rotated image
+                rotated_img.save(output_path, **save_params)
+            
+            logger.info(f"Successfully rotated image by {angle} degrees")
+            
+        except ValidationError:
+            raise
+        except Exception as e:
+            logger.error(f"Error rotating image: {str(e)}")
+            raise ValidationError(f"Error during image rotation: {str(e)}")
+
 
 logger.debug("Converter module loaded")

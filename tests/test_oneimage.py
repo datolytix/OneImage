@@ -9,6 +9,8 @@ from oneimage.cli.main import app
 from oneimage.utils.validators import ValidationError
 from oneimage.core.converter import ImageConverter
 
+TEST_WIDTH = 100
+TEST_HEIGHT = 100
 
 @pytest.fixture
 def runner():
@@ -153,3 +155,86 @@ def test_convert_cli_command(runner, temp_output_dir):
     result = runner.invoke(app, ["convert", str(input_path), str(output_path)])
     assert result.exit_code == 0
     assert output_path.exists()
+
+
+def test_rotate_image_90_degrees(tmp_path):
+    """Test rotating an image by 90 degrees."""
+    # Create test image
+    input_path = tmp_path / "test_input.png"
+    output_path = tmp_path / "test_output.png"
+    create_test_image(input_path)
+
+    # Rotate image
+    converter = ImageConverter()
+    converter.rotate_image(input_path, output_path, angle=90)
+
+    # Verify output exists and is valid
+    assert output_path.exists()
+    with Image.open(output_path) as img:
+        assert img.size[0] == TEST_HEIGHT  # Width and height should be swapped
+        assert img.size[1] == TEST_WIDTH
+
+
+def test_rotate_image_custom_angle(tmp_path):
+    """Test rotating an image by a custom angle."""
+    input_path = tmp_path / "test_input.png"
+    output_path = tmp_path / "test_output.png"
+    create_test_image(input_path)
+
+    converter = ImageConverter()
+    converter.rotate_image(input_path, output_path, angle=45, expand=True)
+
+    assert output_path.exists()
+    with Image.open(output_path) as img:
+        # For 45 degrees with expand=True, dimensions should be larger
+        assert img.size[0] > TEST_WIDTH
+        assert img.size[1] > TEST_HEIGHT
+
+
+def test_rotate_image_no_expand(tmp_path):
+    """Test rotating an image without expanding."""
+    input_path = tmp_path / "test_input.png"
+    output_path = tmp_path / "test_output.png"
+    create_test_image(input_path)
+
+    converter = ImageConverter()
+    converter.rotate_image(input_path, output_path, angle=45, expand=False)
+
+    assert output_path.exists()
+    with Image.open(output_path) as img:
+        assert img.size[0] == TEST_WIDTH  # Dimensions should remain the same
+        assert img.size[1] == TEST_HEIGHT
+
+
+def test_rotate_image_with_quality(tmp_path):
+    """Test rotating an image with quality setting."""
+    input_path = tmp_path / "test_input.png"
+    output_path = tmp_path / "test_output.jpg"
+    create_test_image(input_path)
+
+    converter = ImageConverter()
+    converter.rotate_image(input_path, output_path, angle=90, quality=50)
+
+    assert output_path.exists()
+    # Verify it's a JPEG
+    with Image.open(output_path) as img:
+        assert img.format == "JPEG"
+
+
+def test_rotate_cli_command(tmp_path):
+    """Test the rotate CLI command."""
+    input_path = tmp_path / "test_input.png"
+    output_path = tmp_path / "test_output.png"
+    create_test_image(input_path)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        ["rotate", str(input_path), str(output_path), "--angle", "90"]
+    )
+
+    assert result.exit_code == 0
+    assert output_path.exists()
+    with Image.open(output_path) as img:
+        assert img.size[0] == TEST_HEIGHT
+        assert img.size[1] == TEST_WIDTH
