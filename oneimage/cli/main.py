@@ -210,5 +210,71 @@ def convert(
         sys.exit(1)
 
 
+@app.command()
+def resize(
+    input_file: Path = typer.Argument(..., help="Input image file path"),
+    output_file: Path = typer.Argument(..., help="Output image file path"),
+    width: Optional[int] = typer.Option(None, "--width", "-w", help="Target width in pixels"),
+    height: Optional[int] = typer.Option(None, "--height", "-h", help="Target height in pixels"),
+    maintain_aspect_ratio: bool = typer.Option(True, "--no-aspect-ratio", help="Don't maintain aspect ratio", show_default=False),
+    quality: Optional[int] = typer.Option(None, "--quality", "-q", help="Output image quality (1-100)"),
+    show_logs: bool = typer.Option(False, "--show-logs", help="Show detailed logs"),
+    log_level: LogLevel = typer.Option(LogLevel.INFO, "--log-level", help="Log level"),
+) -> None:
+    """
+    Resize an image to specified dimensions.
+
+    If only width or height is specified, the other dimension will be calculated to maintain aspect ratio.
+    If both dimensions are specified and --no-aspect-ratio is not used, the image will be resized to fit
+    within the specified dimensions while maintaining aspect ratio.
+    """
+    try:
+        # Setup logging
+        setup_logging(show_logs, log_level)
+        logger.debug("Starting resize command")
+
+        # Show resize operation details
+        console.print(Panel.fit(
+            f"[bold]Resize Operation[/bold]\n"
+            f"Input: [cyan]{input_file}[/cyan]\n"
+            f"Output: [cyan]{output_file}[/cyan]\n"
+            f"Width: [cyan]{width or 'auto'}[/cyan]\n"
+            f"Height: [cyan]{height or 'auto'}[/cyan]\n"
+            f"Maintain Aspect Ratio: [cyan]{maintain_aspect_ratio}[/cyan]",
+            title="OneImage",
+            border_style="blue"
+        ))
+
+        with console.status(f"Resizing {input_file.name} to {output_file.name}..."):
+            # Resize the image
+            ImageConverter.resize_image(
+                input_file,
+                output_file,
+                width=width,
+                height=height,
+                maintain_aspect_ratio=maintain_aspect_ratio,
+                quality=quality
+            )
+
+        # Show success message
+        print(Panel.fit(
+            f"[green]Successfully resized[/green] [bold]{input_file.name}[/bold] to [bold]{output_file.name}[/bold]",
+            title="Success",
+            border_style="green"
+        ))
+
+    except ValidationError as e:
+        logger.error(f"Validation error: {str(e)}")
+        console.print(f"[red]Error:[/red] {str(e)}")
+        sys.exit(1)
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        console.print("[red]An unexpected error occurred[/red]")
+        if show_logs:
+            console.print(f"[red]Error details:[/red] {str(e)}")
+        sys.exit(1)
+
+
 if __name__ == '__main__':
     app()
