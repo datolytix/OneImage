@@ -1,6 +1,13 @@
 # OneImage
 
-A powerful and user-friendly command-line tool for image manipulation.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://github.com/datolytix/OneImage/workflows/CI/badge.svg)](https://github.com/datolytix/OneImage/actions)
+[![Coverage Status](https://codecov.io/gh/datolytix/OneImage/branch/main/graph/badge.svg)](https://codecov.io/gh/datolytix/OneImage)
+[![Status: Alpha](https://img.shields.io/badge/status-alpha-red.svg)]()
+
+> ⚠️ **Note**: This project is currently in alpha version. APIs and features may change without notice.
+
+A powerful and user-friendly command-line tool for image manipulation, built with Python. OneImage provides a comprehensive suite of image processing capabilities, making it easy to perform common image operations like format conversion, resizing, rotation, and watermarking through a simple command-line interface. Whether you're a developer automating image processing tasks or a user looking for a straightforward tool to manage your images, OneImage offers the flexibility and features you need.
 
 ## Features
 
@@ -16,15 +23,61 @@ A powerful and user-friendly command-line tool for image manipulation.
 ## Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/datolytix/OneImage.git
+cd OneImage
+
 # Create and activate virtual environment (recommended)
 python -m venv .venv
 source .venv/bin/activate  # Linux/Mac
 # or
 .venv\Scripts\activate  # Windows
 
-# Install the package
+# Install development dependencies
+pip install -r requirements.txt
+
+# Install the package in editable mode
 pip install -e .
+
+# Run tests to verify installation
+pytest -v
+
+# Run linting
+pylint oneimage tests
+
+# Generate coverage report
+pytest --cov=oneimage tests/
+coverage html  # Generate HTML coverage report
 ```
+
+## Development Setup
+
+1. **Dependencies**
+   - Python 3.8 or higher
+   - Pillow library for image processing
+   - Click for CLI interface
+   - pytest for testing
+   - pylint for code quality
+
+2. **Project Structure**
+   ```
+   oneimage/
+   ├── oneimage/           # Main package directory
+   │   ├── core/           # Core functionality
+   │   ├── utils/          # Utility functions
+   │   └── config/         # Configuration
+   ├── tests/              # Test files
+   ├── docs/               # Documentation
+   ├── requirements.txt    # Project dependencies
+   └── setup.py           # Package setup file
+   ```
+
+3. **Environment Variables**
+   ```bash
+   # Optional: Set custom configuration
+   export ONEIMAGE_LOG_LEVEL=DEBUG
+   export ONEIMAGE_DEFAULT_QUALITY=90
+   ```
 
 ## Quick Start
 
@@ -118,6 +171,48 @@ oneimage watermark input.png output.jpg \
     --quality 95
 ```
 
+## Advanced Usage
+
+### Batch Processing
+
+Process multiple images at once using shell commands:
+
+```bash
+# Convert all JPGs in current directory to WebP
+for file in *.jpg; do
+    oneimage convert "$file" "${file%.jpg}.webp"
+done
+
+# Resize all PNGs to width 800px
+for file in *.png; do
+    oneimage resize "$file" "resized_${file}" --width 800
+done
+```
+
+### Pipeline Operations
+
+Combine multiple operations:
+
+```bash
+# Resize, rotate, and add watermark in one pipeline
+oneimage resize input.jpg temp1.jpg --width 800 && \
+oneimage rotate temp1.jpg temp2.jpg --angle 45 && \
+oneimage watermark temp2.jpg output.jpg --text "Copyright" && \
+rm temp1.jpg temp2.jpg
+```
+
+### Debug Mode
+
+Run with detailed logging for troubleshooting:
+
+```bash
+# Enable debug logging
+oneimage --log-level DEBUG convert input.png output.jpg
+
+# Save logs to file
+oneimage --log-level DEBUG --log-file process.log convert input.png output.jpg
+```
+
 ## Command Options
 
 ### Global Options
@@ -209,22 +304,53 @@ oneimage convert input.png output.jpg --log-level DEBUG
 oneimage convert input.png output.jpg --log-level WARNING
 ```
 
-## Best Practices
+## Performance Tips
 
-1. **Quality Settings**
-   - Use higher quality (90-100) for important images
-   - Use moderate quality (75-85) for web images
-   - Use lower quality (60-75) for thumbnails
+1. **Memory Management**
+   - Process large images in batches
+   - Monitor system memory usage
+   - Use appropriate quality settings
 
-2. **Format Selection**
-   - PNG: Best for screenshots, graphics with text
-   - JPEG: Ideal for photographs
-   - WebP: Good balance for web use
+2. **Storage Optimization**
+   - Choose appropriate formats:
+     * PNG for graphics/screenshots
+     * JPEG for photos (quality 80-90)
+     * WebP for web content
 
-3. **Performance**
-   - Process large batches of images in smaller chunks
-   - Monitor system resources during bulk operations
-   - Use appropriate quality settings to manage file sizes
+3. **Batch Processing**
+   - Use shell scripts for bulk operations
+   - Process files in parallel when possible
+   - Monitor CPU usage
+
+## Troubleshooting
+
+Common issues and solutions:
+
+1. **Installation Issues**
+   ```bash
+   # Upgrade pip
+   pip install --upgrade pip
+
+   # Clear pip cache
+   pip cache purge
+
+   # Install with verbose output
+   pip install -e . -v
+   ```
+
+2. **Permission Errors**
+   ```bash
+   # Check file permissions
+   ls -l input.jpg
+
+   # Change file permissions if needed
+   chmod 644 input.jpg
+   ```
+
+3. **Memory Errors**
+   - Reduce image dimensions before processing
+   - Free up system memory
+   - Process fewer images simultaneously
 
 ## Contributing
 
