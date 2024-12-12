@@ -292,7 +292,7 @@ def rotate(
     try:
         setup_logging(log_level)
         logger.debug(f"Starting rotation with angle {angle}")
-        
+
         converter = ImageConverter()
         converter.rotate_image(
             input_path=input_path,
@@ -301,9 +301,9 @@ def rotate(
             expand=expand,
             quality=quality,
         )
-        
+
         console.print(f"[green]Successfully rotated image:[/] {input_path} -> {output_path}")
-        
+
     except ValidationError as e:
         console.print(f"[red]Validation error:[/] {str(e)}")
         raise typer.Exit(1)
@@ -333,7 +333,7 @@ def watermark(
     try:
         setup_logging(show_logs=True, log_level=log_level)
         logger.debug(f"Adding watermark to {input_path}")
-        
+
         WatermarkProcessor.add_watermark(
             input_path=input_path,
             output_path=output_path,
@@ -344,14 +344,68 @@ def watermark(
             font_color=font_color,
             quality=quality,
         )
-        
+
         console.print(f"[green]Successfully added watermark:[/] {input_path} -> {output_path}")
-        
+
     except ValidationError as e:
         console.print(f"[red]Validation error:[/] {str(e)}")
         raise typer.Exit(1)
     except Exception as e:
         console.print(f"[red]Unexpected error:[/] {str(e)}")
+        raise typer.Exit(1)
+
+
+@app.command()
+def remove_bg(
+    input_path: Path = typer.Argument(..., help="Path to input image"),
+    output_path: Path = typer.Argument(..., help="Path for output image"),
+    model: str = typer.Option("u2net", help="Model to use for background removal (u2net, u2netp, u2net_human_seg)"),
+    alpha_matting: bool = typer.Option(False, help="Use alpha matting for better edge detection"),
+    alpha_matting_foreground_threshold: int = typer.Option(240, help="Alpha matting foreground threshold"),
+    alpha_matting_background_threshold: int = typer.Option(10, help="Alpha matting background threshold"),
+    alpha_matting_erode_size: int = typer.Option(10, help="Alpha matting erode size"),
+    quality: Optional[int] = typer.Option(None, help="Quality for lossy formats (1-100)"),
+    log_level: str = typer.Option("INFO", help="Logging level"),
+):
+    """
+    Remove the background from an image.
+
+    This command uses AI to detect and remove the background from images,
+    leaving only the main subject. Perfect for product photos or portraits.
+    """
+    try:
+        setup_logging(show_logs=True, log_level=log_level)
+        logger.debug(f"Removing background from {input_path}")
+
+        from ..core.background import BackgroundRemover
+
+        remover = BackgroundRemover()
+        result = remover.remove_background(
+            str(input_path),
+            model_name=model,
+            alpha_matting=alpha_matting,
+            alpha_matting_foreground_threshold=alpha_matting_foreground_threshold,
+            alpha_matting_background_threshold=alpha_matting_background_threshold,
+            alpha_matting_erode_size=alpha_matting_erode_size,
+        )
+
+        # Save the image with the specified quality
+        result.save(
+            str(output_path),
+            quality=quality if quality is not None else 95
+        )
+
+        console.print(
+            Panel(
+                f"✨ Successfully removed background and saved to: [bold green]{output_path}[/bold green]",
+                title="Success",
+                style="green",
+            )
+        )
+
+    except Exception as e:
+        logger.error(f"Error removing background: {str(e)}")
+        console.print(f"[red]Error:[/red] {str(e)}")
         raise typer.Exit(1)
 
 

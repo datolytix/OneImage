@@ -3,6 +3,7 @@ import pytest
 from pathlib import Path
 from typer.testing import CliRunner
 from PIL import Image
+from unittest.mock import Mock
 
 from oneimage.cli.main import app
 
@@ -232,3 +233,83 @@ def test_watermark_invalid_opacity(runner, tmp_path):
     
     assert result.exit_code == 1
     assert not output_path.exists()
+
+
+def test_remove_bg_command(runner, test_images, temp_output_dir, mocker):
+    """Test the remove-bg command."""
+    # Mock background removal to avoid actual processing
+    mock_output = Image.new("RGBA", (100, 100), (255, 0, 0, 0))
+    mocker.patch("oneimage.core.background.remove", return_value=mock_output)
+    
+    input_path = test_images["rgb.png"]
+    output_path = temp_output_dir / "output_nobg.png"
+    
+    # Test basic command
+    result = runner.invoke(app, ["remove-bg", str(input_path), str(output_path)])
+    assert result.exit_code == 0
+    assert "Successfully removed background" in result.stdout
+    assert output_path.exists()
+
+
+def test_remove_bg_command_with_options(runner, test_images, temp_output_dir, mocker):
+    """Test the remove-bg command with various options."""
+    # Mock background removal
+    mock_output = Image.new("RGBA", (100, 100), (255, 0, 0, 0))
+    mock_remove = mocker.patch("oneimage.core.background.remove", return_value=mock_output)
+    
+    input_path = test_images["rgb.png"]
+    output_path = temp_output_dir / "output_nobg_options.png"
+    
+    # Test with all options
+    result = runner.invoke(app, [
+        "remove-bg",
+        str(input_path),
+        str(output_path),
+        "--model", "u2net_human_seg",
+        "--alpha-matting",
+        "--alpha-matting-foreground-threshold", "230",
+        "--alpha-matting-background-threshold", "20",
+        "--alpha-matting-erode-size", "15",
+        "--quality", "90"
+    ])
+    
+    assert result.exit_code == 0
+    assert "Successfully removed background" in result.stdout
+    assert output_path.exists()
+    
+    # Verify the mock was called with correct parameters
+    mock_remove.assert_called_once()
+    call_kwargs = mock_remove.call_args.kwargs
+    assert call_kwargs["alpha_matting"] is True
+    assert call_kwargs["alpha_matting_foreground_threshold"] == 230
+    assert call_kwargs["alpha_matting_background_threshold"] == 20
+    assert call_kwargs["alpha_matting_erode_size"] == 15
+
+
+def test_remove_bg_command_invalid_input(runner, temp_output_dir):
+    """Test the remove-bg command with invalid input."""
+    # Test with non-existent input file
+    result = runner.invoke(app, [
+        "remove-bg",
+        "nonexistent.jpg",
+        str(temp_output_dir / "output.png")
+    ])
+    assert result.exit_code == 1
+    assert "Error" in result.stdout
+
+
+def test_remove_bg_command_invalid_params(runner, test_images, temp_output_dir):
+    """Test the remove-bg command with invalid parameters."""
+    input_path = test_images["rgb.png"]
+    output_path = temp_output_dir / "output_invalid.png"
+    
+    # Test with invalid alpha matting parameters
+    result = runner.invoke(app, [
+        "remove-bg",
+        str(input_path),
+        str(output_path),
+        "--alpha-matting",
+        "--alpha-matting-foreground-threshold", "300"  # Invalid value
+    ])
+    assert result.exit_code == 1
+    assert "Error" in result.stdout
