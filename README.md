@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://github.com/datolytix/OneImage/workflows/CI/badge.svg)](https://github.com/datolytix/OneImage/actions)
-[![Coverage Status](https://codecov.io/gh/datolytix/OneImage/branch/main/graph/badge.svg)](https://codecov.io/gh/datolytix/OneImage)
+[![Coverage Status](https://codecov.io/gh/datolytix/OneImage/branch/master/graph/badge.svg)](https://codecov.io/gh/datolytix/OneImage)
 [![Status: Alpha](https://img.shields.io/badge/status-alpha-red.svg)]()
 
 > ⚠️ **Note**: This project is currently in alpha version. APIs and features may change without notice.
